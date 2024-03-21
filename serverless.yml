@@ -4,7 +4,7 @@ frameworkVersion: '3'
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
   timeClockTableName: 'timeClock-table-${sls:stage}'
-  accountId: '590184086377'
+  accountId: '905418037797'
 
 provider:
   name: aws
@@ -27,37 +27,101 @@ provider:
     TIMECLOCK_TABLE: ${self:custom.timeClockTableName}
 
 functions:
-  api:
-    handler: src/index.handler
+  # api:
+  #   handler: src/index.handler
+  #   events:
+  #     - httpApi: '*'
+  createTimeClock:
+    handler: src/functions/createTimeClock/handler/createTimeClock
+    environment:
+      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
     events:
-      - httpApi: '*'
-
+      - http:
+          path: timeclock
+          method: post
+  createEmployee:
+    handler: src/functions/createEmployee/handler.createEmployee
+    environment:
+      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+    events:
+      - http:
+          path: employee
+          method: post
 resources:
   Resources:
-    UsersTable:
+    EmployeesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        AttributeDefinitions:
-          - AttributeName: employeeId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: employeeId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.employeesTableName}
-    TimeClockTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
         AttributeDefinitions:
-          - AttributeName: employeeId
-            AttributeType: S
-          - AttributeName: date
-            AttributeType: S
+          - AttributeName: "PK"
+            AttributeType: "S"
+          - AttributeName: "SK"
+            AttributeType: "S"
+          - AttributeName: "username"
+            AttributeType: "S"
+          - AttributeName: "registry"
+            AttributeType: "S"
+          - AttributeName: "date"
+            AttributeType: "S"
         KeySchema:
-          - AttributeName: employeeId
-            KeyType: HASH
-          - AttributeName: date
-            KeyType: RANGE
+          - AttributeName: "PK"
+            KeyType: "HASH"
+          - AttributeName: "SK"
+            KeyType: "RANGE"
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.timeClockTableName}
+        GlobalSecondaryIndexes:
+          - IndexName: "UsernameIndex"
+            KeySchema:
+              - AttributeName: "username"
+                KeyType: "HASH"
+              - AttributeName: "PK"
+                KeyType: "RANGE"
+            Projection:
+              ProjectionType: "ALL"
+          - IndexName: "RegistryIndex"
+            KeySchema:
+              - AttributeName: "registry"
+                KeyType: "HASH"
+              - AttributeName: "PK"
+                KeyType: "RANGE"
+            Projection:
+              ProjectionType: "ALL"
+          - IndexName: "TimeClockDateIndex"
+            KeySchema:
+              - AttributeName: "PK" 
+                KeyType: "HASH"
+              - AttributeName: "date" 
+                KeyType: "RANGE"
+            Projection:
+              ProjectionType: "ALL" 
+
+# resources:
+#   Resources:
+#     EmployeesTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         AttributeDefinitions:
+#           - AttributeName: employeeId
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: employeeId
+#             KeyType: HASH
+#         BillingMode: PAY_PER_REQUEST
+#         TableName: ${self:custom.employeesTableName}
+#     TimeClockTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         AttributeDefinitions:
+#           - AttributeName: employeeId
+#             AttributeType: S
+#           - AttributeName: date
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: employeeId
+#             KeyType: HASH
+#           - AttributeName: date
+#             KeyType: RANGE
+#         BillingMode: PAY_PER_REQUEST
+#         TableName: ${self:custom.timeClockTableName}
         
