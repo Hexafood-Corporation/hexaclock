@@ -1,6 +1,9 @@
 service: hexaclock
 frameworkVersion: '3'
 
+plugins:
+  - serverless-plugin-typescript
+
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
   timeClockTableName: 'timeClock-table-${sls:stage}'

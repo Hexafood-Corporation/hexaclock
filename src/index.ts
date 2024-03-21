@@ -1,4 +1,6 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+import { NextFunction, Request, Response } from "express";
+
 const {
   DynamoDBDocumentClient,
   GetCommand,
@@ -6,7 +8,6 @@ const {
 } = require("@aws-sdk/lib-dynamodb");
 const express = require("express");
 const serverless = require("serverless-http");
-
 
 const app = express();
 
@@ -17,7 +18,7 @@ const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
 app.use(express.json());
 
-app.get("/employees/:employeeId", async function (req, res) {
+app.get("/employees/:employeeId", async function (req: Request, res: Response) {
   const params = {
     TableName: EMPLOYEES_TABLE,
     Key: {
@@ -41,7 +42,7 @@ app.get("/employees/:employeeId", async function (req, res) {
   }
 });
 
-app.post("/employees", async function (req, res) {
+app.post("/employees", async function (req: Request, res: Response) {
   const { employeeId, name } = req.body;
   if (typeof employeeId !== "string") {
     return res.status(400).json({ error: '"employeeId" must be a string' });
@@ -66,12 +67,12 @@ app.post("/employees", async function (req, res) {
   }
 });
 
-app.post('/timeClock', async function(req, res){
+app.post("/timeClock", async function (req: Request, res: Response) {
   const { employeeId } = req.body;
-  if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
+  if (typeof employeeId !== "string")
+    return res.status(400).json({ error: '"employeeId" must be a string' });
 
-
-  const date = new Date().toISOString().split('T')[0];
+  const date = new Date().toISOString().split("T")[0];
   const params = {
     TableName: TIME_CLOCK_TABLE,
     Item: {
@@ -87,18 +88,18 @@ app.post('/timeClock', async function(req, res){
     console.log(error);
     return res.status(500).json({ error: "Could not create timeClock" });
   }
-})
+});
 
-app.get('/timeclock/:employeeId', async function(req, res){
+app.get("/timeclock/:employeeId", async function (req: Request, res: Response) {
   // on last 30 days
   const params = {
     TableName: TIME_CLOCK_TABLE,
     Key: {
       employeeId: req.params.employeeId,
     },
-    KeyConditionExpression: 'employeeId = :employeeId',
+    KeyConditionExpression: "employeeId = :employeeId",
     ExpressionAttributeValues: {
-      ':employeeId': req.params.employeeId,
+      ":employeeId": req.params.employeeId,
     },
   };
 
@@ -115,13 +116,12 @@ app.get('/timeclock/:employeeId', async function(req, res){
     console.log(error);
     res.status(500).json({ error: "Could not retreive timeClock" });
   }
-})
+});
 
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   return res.status(404).json({
     error: "Not Found",
   });
 });
-
 
 module.exports.handler = serverless(app);
