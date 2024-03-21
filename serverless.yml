@@ -2,8 +2,9 @@ service: hexaclock
 frameworkVersion: '3'
 
 custom:
-  tableName: 'employees-table-${sls:stage}'
-  accountId: '905418037797'
+  employeesTableName: 'employees-table-${sls:stage}'
+  timeClockTableName: 'timeClock-table-${sls:stage}'
+  accountId: '590184086377'
 
 provider:
   name: aws
@@ -22,11 +23,12 @@ provider:
       #     Resource:
       #       - Fn::GetAtt: [ EmployeesTable, Arn ]
   environment:
-    EMPLOYEES_TABLE: ${self:custom.tableName}
+    EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+    TIMECLOCK_TABLE: ${self:custom.timeClockTableName}
 
 functions:
   api:
-    handler: index.handler
+    handler: src/index.handler
     events:
       - httpApi: '*'
 
@@ -42,4 +44,20 @@ resources:
           - AttributeName: employeeId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.tableName}
+        TableName: ${self:custom.employeesTableName}
+    TimeClockTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: employeeId
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: employeeId
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.timeClockTableName}
+        

@@ -11,6 +11,7 @@ const serverless = require("serverless-http");
 const app = express();
 
 const EMPLOYEES_TABLE = process.env.EMPLOYEES_TABLE;
+const TIME_CLOCK_TABLE = process.env.TIME_CLOCK_TABLE;
 const client = new DynamoDBClient();
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
@@ -64,6 +65,57 @@ app.post("/employees", async function (req, res) {
     return res.status(500).json({ error: "Could not create employee" });
   }
 });
+
+app.post('/timeClock', async function(req, res){
+  const { employeeId } = req.body;
+  if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
+
+
+  const date = new Date().toISOString().split('T')[0];
+  const params = {
+    TableName: TIME_CLOCK_TABLE,
+    Item: {
+      employeeId: employeeId,
+      date: date,
+    },
+  };
+
+  try {
+    await dynamoDbClient.send(new PutCommand(params));
+    return res.json({ employeeId, date });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Could not create timeClock" });
+  }
+})
+
+app.get('/timeclock/:employeeId', async function(req, res){
+  // on last 30 days
+  const params = {
+    TableName: TIME_CLOCK_TABLE,
+    Key: {
+      employeeId: req.params.employeeId,
+    },
+    KeyConditionExpression: 'employeeId = :employeeId',
+    ExpressionAttributeValues: {
+      ':employeeId': req.params.employeeId,
+    },
+  };
+
+  try {
+    const { Items } = await dynamoDbClient.send(new GetCommand(params));
+    if (Items) {
+      res.json(Items);
+    } else {
+      res
+        .status(404)
+        .json({ error: 'Could not find timeClock with provided "employeeId"' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Could not retreive timeClock" });
+  }
+})
 
 app.use((req, res, next) => {
   return res.status(404).json({
