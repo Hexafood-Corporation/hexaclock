@@ -17,12 +17,12 @@ module.exports.createTimeClock = async (event, context, cb) => {
     return;
 }
 
-    const { employeeId } = body;
+    const { employeeId, name } = body;
     if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
 
 
     const date = new Date().toISOString().split('T')[0];
-    const timeClockId = `TIMECLOCK#${Date.now()}`;
+    const timeClockId = `TIMECLOCK#${date}`;
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
         Item: {
@@ -30,6 +30,7 @@ module.exports.createTimeClock = async (event, context, cb) => {
             PK: `EMPLOYEE#${employeeId}`,
             SK: timeClockId,
             date: date,
+            name: name,
         },
     };
 
@@ -38,12 +39,30 @@ module.exports.createTimeClock = async (event, context, cb) => {
         
         const getParams = {
             TableName: params.TableName,
-            Key: params.Item
+            Key: {
+                PK: params.Item.PK,
+                SK: params.Item.SK
+            }
         };
 
         const result = await dynamoDbClient.send(new GetCommand(getParams));
 
+        // Obter os dados adicionais do usuário
+        const userParams = {
+            TableName: params.TableName,
+            Key: {
+                PK: params.Item.PK,
+                SK: `EMPLOYEE#${employeeId}`
+            }
+        };
+
+        const userResult = await dynamoDbClient.send(new GetCommand(userParams));
+
+        // Adicionar os dados do usuário ao resultado
+        result.Item = { ...result.Item, ...userResult.Item };
+
         cb(null, send(200, { data: result.Item }));
+
     } catch (error) {
         console.log(error);
         cb(null,send(500, { error: "Could not create timeClock" }));
