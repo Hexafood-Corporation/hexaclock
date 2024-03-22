@@ -4,7 +4,7 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '637423636452'
+  accountId: '905418037797'
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
   cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
@@ -28,6 +28,8 @@ provider:
       #       - Fn::GetAtt: [ EmployeesTable, Arn ]
   environment:
     EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+    MAILGUN_API_KEY: 
+    MAILGUN_DOMAIN: sandbox367af257f688428891d21b81c2de4c92.mailgun.org
 
 functions:
   # api:
@@ -62,6 +64,11 @@ functions:
           method: get
           # authorizer: #desprotegendo endpoints temporariamente
           #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
+  sendEmail:
+    handler: src/functions/notification/sendEmail/handler.sendEmail
+    events:
+      - sns: sendEmail
+      
 resources:
   Resources:
     EmployeesTable:
@@ -145,4 +152,3 @@ resources:
         LogoutURLs:
           - ${self:custom.apiUrl}
         SupportedIdentityProviders: ["COGNITO"]
-        
