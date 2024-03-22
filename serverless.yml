@@ -5,7 +5,11 @@ frameworkVersion: '3'
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
   timeClockTableName: 'timeClock-table-${sls:stage}'
-  accountId: '590184086377'
+  accountId: '905418037797'
+  region: 'us-east-1'
+  userPoolId: 'us-east-1_Mx2ZuR78g'
+  cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
+  apiUrl: 'https://f3lpqbpke9.execute-api.us-east-1.amazonaws.com'
 
 provider:
   name: aws
@@ -40,6 +44,8 @@ functions:
       - http:
           path: timeclock
           method: post
+          # authorizer: #desprotegendo endpoints temporariamente
+          #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
   createEmployee:
     handler: src/functions/createEmployee/handler.createEmployee
     environment:
@@ -48,6 +54,8 @@ functions:
       - http:
           path: employee
           method: post
+          # authorizer: #desprotegendo endpoints temporariamente
+          #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
 resources:
   Resources:
     EmployeesTable:
@@ -97,32 +105,38 @@ resources:
             Projection:
               ProjectionType: "ALL" 
 
-# resources:
-#   Resources:
-#     EmployeesTable:
-#       Type: AWS::DynamoDB::Table
-#       Properties:
-#         AttributeDefinitions:
-#           - AttributeName: employeeId
-#             AttributeType: S
-#         KeySchema:
-#           - AttributeName: employeeId
-#             KeyType: HASH
-#         BillingMode: PAY_PER_REQUEST
-#         TableName: ${self:custom.employeesTableName}
-#     TimeClockTable:
-#       Type: AWS::DynamoDB::Table
-#       Properties:
-#         AttributeDefinitions:
-#           - AttributeName: employeeId
-#             AttributeType: S
-#           - AttributeName: date
-#             AttributeType: S
-#         KeySchema:
-#           - AttributeName: employeeId
-#             KeyType: HASH
-#           - AttributeName: date
-#             KeyType: RANGE
-#         BillingMode: PAY_PER_REQUEST
-#         TableName: ${self:custom.timeClockTableName}
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: hexaclock
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+            AttributeDataType: String
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+
+    UserClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: hexaclock-client
+        GenerateSecret: false
+        UserPoolId: 
+          Ref: UserPool
+        AccessTokenValidity: 5
+        IdTokenValidity: 5
+        AllowedOAuthFlows:
+          - "implicit"
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthScopes:
+          - "openid"
+          - "email"
+          - "profile"
+        CallbackURLs:
+          - ${self:custom.apiUrl}
+        LogoutURLs:
+          - ${self:custom.apiUrl}
+        SupportedIdentityProviders: ["COGNITO"]
         
