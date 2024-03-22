@@ -1,4 +1,4 @@
-const { dynamoDbClient, PutCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
+const { dynamoDbClient, PutCommand, GetCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -9,12 +9,20 @@ const send = (statusCode, body) => ({
 });
 
 module.exports.createTimeClock = async (event, context, cb) => {
-    const { employeeId } = JSON.parse(event.body);
+    let body;
+    try {
+        body = JSON.parse(event.body);
+    } catch (error) {
+        cb(null, send(400, { error: 'Invalid JSON' }));
+    return;
+}
+
+    const { employeeId } = body;
     if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
 
 
     const date = new Date().toISOString().split('T')[0];
-    const timeClockId = `TIMECLOCK#${Date.now()}`; // Supondo que você queira um identificador único
+    const timeClockId = `TIMECLOCK#${Date.now()}`;
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
         Item: {
@@ -27,8 +35,15 @@ module.exports.createTimeClock = async (event, context, cb) => {
 
     try {
         await dynamoDbClient.send(new PutCommand(params));
+        
+        const getParams = {
+            TableName: params.TableName,
+            Key: params.Item
+        };
 
-        cb(null, send(200, { employeeId, date }));
+        const result = await dynamoDbClient.send(new GetCommand(getParams));
+
+        cb(null, send(200, { data: result.Item }));
     } catch (error) {
         console.log(error);
         cb(null,send(500, { error: "Could not create timeClock" }));

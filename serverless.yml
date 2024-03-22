@@ -4,7 +4,6 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  timeClockTableName: 'timeClock-table-${sls:stage}'
   accountId: '590184086377'
 
 provider:
@@ -25,7 +24,6 @@ provider:
       #       - Fn::GetAtt: [ EmployeesTable, Arn ]
   environment:
     EMPLOYEES_TABLE: ${self:custom.employeesTableName}
-    TIMECLOCK_TABLE: ${self:custom.timeClockTableName}
 
 functions:
   # api:
@@ -35,7 +33,7 @@ functions:
   createTimeClock:
     handler: src/functions/createTimeClock/handler.createTimeClock
     environment:
-      EMPLOYEES_TABLE: ${self:custom.timeClockTableName}
+      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
     events:
       - http:
           path: timeclock
@@ -48,6 +46,14 @@ functions:
       - http:
           path: employee
           method: post
+  getTimeClockPerEmployeeByDay:
+    handler: src/functions/getTimeClockPerEmployeeByDay/handler.getTimeClockPerEmployeeByDay
+    environment:
+      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+    events:
+      - http:
+          path: timeclock/{employeeId}/{date}
+          method: get
 resources:
   Resources:
     EmployeesTable:
