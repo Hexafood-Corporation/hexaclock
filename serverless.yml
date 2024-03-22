@@ -1,13 +1,11 @@
 service: hexaclock
 frameworkVersion: '3'
 
-plugins:
-  - serverless-plugin-typescript
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
   timeClockTableName: 'timeClock-table-${sls:stage}'
-  accountId: '905418037797'
+  accountId: '590184086377'
 
 provider:
   name: aws
@@ -35,9 +33,9 @@ functions:
   #   events:
   #     - httpApi: '*'
   createTimeClock:
-    handler: src/functions/createTimeClock/handler/createTimeClock
+    handler: src/functions/createTimeClock/handler.createTimeClock
     environment:
-      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+      EMPLOYEES_TABLE: ${self:custom.timeClockTableName}
     events:
       - http:
           path: timeclock
