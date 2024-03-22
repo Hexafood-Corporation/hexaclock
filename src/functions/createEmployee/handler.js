@@ -17,7 +17,7 @@ module.exports.createEmployee = async (event, context, cb) => {
     }
 
     const params = {
-        TableName: process.env.TABLE,
+        TableName: process.env.EMPLOYEES_TABLE,
         Item: {
             PK: `EMPLOYEE#${employeeId}`,
             SK: `EMPLOYEE`,

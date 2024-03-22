@@ -21,7 +21,9 @@ module.exports.createTimeClock = async (event, context, cb) => {
     if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
 
 
-    const date = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const date = now.toISOString().replace('T', ' ').slice(0, -5);
+
     const timeClockId = `TIMECLOCK#${date}`;
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,

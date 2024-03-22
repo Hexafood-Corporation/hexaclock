@@ -1,5 +1,5 @@
 
-const { dynamoDbClient, GetCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
+const { dynamoDbClient, QueryCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -21,21 +21,23 @@ module.exports.getTimeClockPerEmployeeByDate = async (event, context, cb) => {
     } else if (typeof date !== "string") {
         return cb(null, send(400, { error: '"day" must be a string' }));
     }
-    
+
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
-        Key: {
-            PK: `EMPLOYEE#${employeeId}`,
-            SK: `TIMECLOCK#${date}`,
-        },
+        KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+            ':pk': `EMPLOYEE#${employeeId}`,
+            ':sk': `TIMECLOCK#${date}`
+        }
     };
-
+        
     try {
-        const { Items } = await dynamoDbClient.send(new GetCommand(params));
-        if (!Items) {
+
+        const { Items } = await dynamoDbClient.send(new QueryCommand(params));
+        if (!Items || Items.length === 0) {
             return cb(null, send(404, { error: "TimeClock not found" }));
         }
-        cb(null, send(200, {...Items}));
+        cb(null, send(200, { items: Items }));
     } catch (error) {
         console.log(error);
         cb(null, send(500, { error: "Could not get timeClock" }));

@@ -4,7 +4,7 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '590184086377'
+  accountId: '637423636452'
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
   cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
