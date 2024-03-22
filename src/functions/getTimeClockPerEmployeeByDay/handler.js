@@ -9,16 +9,12 @@ const send = (statusCode, body) => ({
 });
 
 
-module.exports.getTimeClockPerEmployeeByDay = async (event, context, cb) => {
-    const { employeeId, day } = event.pathParameters;
-    console.log({
-        employeeId,
-        day,
-    })
+module.exports.getTimeClockPerEmployeeByDate = async (event, context, cb) => {
+    const { employeeId, date } = event.pathParameters;
 
     if (typeof employeeId !== "string") {
         return cb(null, send(400, { error: '"employeeId" must be a string' }));
-    } else if (typeof day !== "string") {
+    } else if (typeof date !== "string") {
         return cb(null, send(400, { error: '"day" must be a string' }));
     }
 
@@ -27,7 +23,7 @@ module.exports.getTimeClockPerEmployeeByDay = async (event, context, cb) => {
         KeyConditionExpression: "PK = :pk and begins_with(SK, :sk)",
         ExpressionAttributeValues: {
             ":pk": `EMPLOYEE#${employeeId}`,
-            ":sk": `TIMECLOCK#${day}`,
+            ":sk": `TIMECLOCK#${date}`,
         },
     };
 
