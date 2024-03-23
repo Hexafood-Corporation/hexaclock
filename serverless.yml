@@ -7,7 +7,7 @@ custom:
   region: 'us-east-1'
   userPoolId: 'us-east-1_7dvIVdpu3'
   cognitoDomain: 'hexaclock'
-  apiUrl: 'https://oazfvel7na.execute-api.us-east-1.amazonaws.com/'
+  apiUrl: 'https://hexaclock.auth.us-east-1.amazoncognito.com/'
   SqsReportName: 'reports-monthly-${sls:stage}'
 
 provider:
@@ -91,16 +91,18 @@ functions:
           method: post
   preTokenGeneration:
     handler: src/functions/auth/preTokenGeneration/handler.preTokenGeneration
-    events:
-      - cognitoUserPool:
-          pool: ${self:custom.userPoolId}
-          trigger: PreTokenGeneration
+    role: arn:aws:iam::${self:custom.accountId}:role/LabRole
+    # events:
+    #   - cognitoUserPool:
+    #       pool: ${self:custom.userPoolId}
+    #       trigger: PreTokenGeneration
   preSignUp:
     handler: src/functions/auth/preSignUp/handler.preSignUp
-    events:
-      - cognitoUserPool:
-          pool: ${self:custom.userPoolId}
-          trigger: PreSignUp
+    role: arn:aws:iam::${self:custom.accountId}:role/LabRole
+    # events:
+    #   - cognitoUserPool:
+    #       pool: ${self:custom.userPoolId}
+    #       trigger: PreSignUp
 
 resources:
   Resources:
@@ -173,9 +175,9 @@ resources:
             MinimumLength: 6
         LambdaConfig:
           PreTokenGeneration:
-            !GetAtt PreTokenGenerationLambdaFunction.Arn
+            Fn::GetAtt: [PreTokenGenerationLambdaFunction, Arn]
           PreSignUp:
-            !GetAtt PreSignUpLambdaFunction.Arn
+            Fn::GetAtt: [PreSignUpLambdaFunction, Arn]
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
