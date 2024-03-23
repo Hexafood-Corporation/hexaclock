@@ -5,9 +5,9 @@ custom:
   employeesTableName: 'employees-table-${sls:stage}'
   accountId: '905418037797'
   region: 'us-east-1'
-  userPoolId: 'us-east-1_Mx2ZuR78g'
+  userPoolId: 'us-east-1_aVQ2uyrki'
   cognitoDomain: 'hexaclock'
-  apiUrl: 'https://f3lpqbpke9.execute-api.us-east-1.amazonaws.com'
+  apiUrl: 'https://xeuwgmopzg.execute-api.us-east-1.amazonaws.com'
   SqsReportName: 'reports-monthly-${sls:stage}'
 
 provider:
@@ -154,6 +154,14 @@ resources:
             Required: true
             Mutable: true
             AttributeDataType: String
+          - Name: name
+            Required: true
+            Mutable: true
+            AttributeDataType: String
+          - Name: profile
+            Required: true
+            Mutable: true
+            AttributeDataType: String
         Policies:
           PasswordPolicy:
             MinimumLength: 6
@@ -182,6 +190,16 @@ resources:
         LogoutURLs:
           - ${self:custom.apiUrl}
         SupportedIdentityProviders: ["COGNITO"]
+        # WriteAttributes:
+        #   - name
+        #   - custom:registry
+        # UserAttributes:
+        #   - Name: email
+        #     Required: true
+        #   - Name: name
+        #     Required: false
+        #   - Name: registry
+        #     Required: false
 
     Queue:
       Type: "AWS::SQS::Queue"

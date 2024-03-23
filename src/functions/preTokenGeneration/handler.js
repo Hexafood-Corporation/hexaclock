@@ -1,4 +1,5 @@
-const { dynamoDbClient, QueryCommand } = require('../../infra/dynamoDbClient'); 
+const { dynamoDbClient, QueryCommand , PutCommand} = require('../../infra/dynamoDbClient');
+const { v4: uuidv4 } = require('uuid');
 
 module.exports.preTokenGeneration = async (event) => {
     const username = event.userName;
@@ -6,7 +7,7 @@ module.exports.preTokenGeneration = async (event) => {
     // Ajuste os parâmetros para usar o GSI
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
-        IndexName: 'UsernameIndex', 
+        IndexName: 'UsernameIndex',
         KeyConditionExpression: 'username = :username',
         ExpressionAttributeValues: {
             ':username': username
@@ -21,16 +22,41 @@ module.exports.preTokenGeneration = async (event) => {
             const employeeId = result.Items[0].PK; // Assumindo que 'id' seja o PK do usuário.
             console.log(`Employee ID: ${employeeId}`);
 
-            if (employeeId != null) {
-                // Adiciona o PK do usuário como uma claim customizada no token
-                event.response = {
-                    claimsOverrideDetails: {
-                        claimsToAddOrOverride: {
-                            employeeId: employeeId,
-                        },
-                    },
-                };
+            
+        } else {
+            const name = event.request.userAttributes.name;
+            const registry = event.request.userAttributes.profile;
+            const employeeId = uuidv4();
+            const email = event.request.userAttributes.email;
+
+            const params = {
+                TableName: process.env.EMPLOYEES_TABLE,
+                Item: {
+                    PK: `EMPLOYEE#${employeeId}`,
+                    SK: `EMPLOYEE`,
+                    name: name,
+                    username: username,
+                    registry: registry,
+                    email: email
+                },
+            };
+
+            try {
+                await dynamoDbClient.send(new PutCommand(params));
+            } catch (error) {
+                console.log("Error ao criar novo employee:", error);
             }
+        }
+
+        if (employeeId != null) {
+            // Adiciona o PK do usuário como uma claim customizada no token
+            event.response = {
+                claimsOverrideDetails: {
+                    claimsToAddOrOverride: {
+                        employeeId: employeeId,
+                    },
+                },
+            };
         }
     } catch (error) {
         console.log("Erro ao consultar o DynamoDB usando GSI:", error);
