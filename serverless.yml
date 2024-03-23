@@ -82,6 +82,12 @@ functions:
     handler: src/functions/notification/sendEmail/handler.sendEmail
     events:
       - sns: sendEmail
+  preTokenGeneration:
+    handler: src/functions/preTokenGeneration/handler.preTokenGeneration
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.userPoolId}
+          trigger: PreTokenGeneration
       
 resources:
   Resources:
@@ -144,6 +150,8 @@ resources:
         Policies:
           PasswordPolicy:
             MinimumLength: 6
+        LambdaConfig:
+          PreTokenGeneration: arn:aws:lambda:us-east-1:${self:custom.accountId}:function:hexaclock-dev-preTokenGeneration
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
