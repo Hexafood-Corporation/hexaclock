@@ -5,9 +5,9 @@ custom:
   employeesTableName: 'employees-table-${sls:stage}'
   accountId: '905418037797'
   region: 'us-east-1'
-  userPoolId: 'us-east-1_aVQ2uyrki'
+  userPoolId: 'us-east-1_7dvIVdpu3'
   cognitoDomain: 'hexaclock'
-  apiUrl: 'https://xeuwgmopzg.execute-api.us-east-1.amazonaws.com'
+  apiUrl: 'https://oazfvel7na.execute-api.us-east-1.amazonaws.com/'
   SqsReportName: 'reports-monthly-${sls:stage}'
 
 provider:
@@ -90,11 +90,17 @@ functions:
           path: reports
           method: post
   preTokenGeneration:
-    handler: src/functions/preTokenGeneration/handler.preTokenGeneration
+    handler: src/functions/auth/preTokenGeneration/handler.preTokenGeneration
     events:
       - cognitoUserPool:
           pool: ${self:custom.userPoolId}
           trigger: PreTokenGeneration
+  preSignUp:
+    handler: src/functions/auth/preSignUp/handler.preSignUp
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.userPoolId}
+          trigger: PreSignUp
 
 resources:
   Resources:
@@ -168,6 +174,8 @@ resources:
         LambdaConfig:
           PreTokenGeneration:
             !GetAtt PreTokenGenerationLambdaFunction.Arn
+          PreSignUp:
+            !GetAtt PreSignUpLambdaFunction.Arn
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
