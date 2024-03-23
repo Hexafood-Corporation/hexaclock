@@ -4,14 +4,10 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-<<<<<<< HEAD
-  accountId: '590184086377'
-=======
   accountId: '905418037797'
->>>>>>> c4c91832ff70079d5c1efbbf8cf34923b84eaad2
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
-  cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
+  cognitoDomain: 'hexaclock'
   apiUrl: 'https://f3lpqbpke9.execute-api.us-east-1.amazonaws.com'
 
 provider:
@@ -151,7 +147,8 @@ resources:
           PasswordPolicy:
             MinimumLength: 6
         LambdaConfig:
-          PreTokenGeneration: arn:aws:lambda:us-east-1:${self:custom.accountId}:function:hexaclock-dev-preTokenGeneration
+          PreTokenGeneration:
+            !GetAtt PreTokenGenerationLambdaFunction.Arn
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
@@ -174,3 +171,10 @@ resources:
         LogoutURLs:
           - ${self:custom.apiUrl}
         SupportedIdentityProviders: ["COGNITO"]
+  
+    HexaClockUserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties:
+        Domain: ${self:custom.cognitoDomain}
+        UserPoolId:
+          Ref: UserPool
