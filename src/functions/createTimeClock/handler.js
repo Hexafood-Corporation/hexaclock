@@ -36,6 +36,7 @@ module.exports.createTimeClock = async (event, context, cb) => {
         },
     };
 
+    
     try {
         await dynamoDbClient.send(new PutCommand(params));
         
