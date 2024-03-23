@@ -19,7 +19,7 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build --if-present
-    - run: echo "teste ${{ secrets.AWS_ACCESS_KEY_ID }}"
+    - run: echo "teste  ${{ secrets.AWS_ACCESS_KEY_ID }}"
 
   deploy:
     needs: build
