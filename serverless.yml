@@ -1,18 +1,14 @@
 service: hexaclock
 frameworkVersion: '3'
 
-
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-<<<<<<< HEAD
-  accountId: '590184086377'
-=======
-  accountId: '905418037797'
->>>>>>> c4c91832ff70079d5c1efbbf8cf34923b84eaad2
+  accountId: '637423636452'
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
   cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
   apiUrl: 'https://f3lpqbpke9.execute-api.us-east-1.amazonaws.com'
+  SqsReportName: 'reports-monthly-${sls:stage}'
 
 provider:
   name: aws
@@ -76,13 +72,25 @@ functions:
       - http:
           path: timeclockForRelatory/{employeeId}/{month}
           method: get
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - Queue
+              - Arn 
           # authorizer
           #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
   sendEmail:
     handler: src/functions/notification/sendEmail/handler.sendEmail
     events:
       - sns: sendEmail
-      
+
+  createMonthlyTimeReportRequest:
+    handler: src/functions/createMonthlyTimeReportRequest/handler.createMonthlyTimeReportRequest
+    events:
+      - http:
+          path: reports
+          method: post
+
 resources:
   Resources:
     EmployeesTable:
@@ -166,3 +174,8 @@ resources:
         LogoutURLs:
           - ${self:custom.apiUrl}
         SupportedIdentityProviders: ["COGNITO"]
+
+    Queue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.SqsReportName}

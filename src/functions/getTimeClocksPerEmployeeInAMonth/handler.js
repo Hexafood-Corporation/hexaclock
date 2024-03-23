@@ -1,5 +1,5 @@
 
-const { dynamoDbClient, QueryCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
+const { dynamoDbClient, QueryCommand } = require('../../infra/dynamoDbClient'); 
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -39,7 +39,12 @@ module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => 
         if (!Items || Items.length === 0) {
             return cb(null, send(404, { error: "TimeClock not found" }));
         }
+
+
+        // TODO ENVIAR EMAIL
+
         cb(null, send(200, { items: Items }));
+
     } catch (error) {
         console.log(error);
         cb(null, send(500, { error: "Could not get timeClock" }));

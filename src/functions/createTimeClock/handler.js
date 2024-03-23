@@ -20,7 +20,6 @@ module.exports.createTimeClock = async (event, context, cb) => {
     const { employeeId, name } = body;
     if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
 
-
     const now = new Date();
     const date = now.toISOString().replace('T', ' ').slice(0, -5);
 
