@@ -1,4 +1,7 @@
 const { dynamoDbClient, PutCommand, GetCommand } = require('../../infra/dynamoDbClient'); // Ajuste o caminho conforme a estrutura do seu projeto
+const jwt = require('jsonwebtoken'); 
+const { v4: uuidv4 } = require('uuid');
+
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -9,21 +12,31 @@ const send = (statusCode, body) => ({
 });
 
 module.exports.createTimeClock = async (event, context, cb) => {
-    let body;
-    try {
-        body = JSON.parse(event.body);
-    } catch (error) {
-        cb(null, send(400, { error: 'Invalid JSON' }));
-    return;
-}
+    console.log("event no inicio:", JSON.stringify(event, null, 2));
+    const token = event.headers.Authorization || event.headers.authorization; 
+    console.log("token:", token);
 
-    const { employeeId, name } = body;
+    if (!token) {
+        return send(401, { error: "No token provided" });
+    }
+
+    let employeeId = null;
+    try {
+        const decodedToken = jwt.decode(token.split(" ")[1]); // Decodifica o token (considerando que está no formato 'Bearer token')
+        employeeId = decodedToken.employeeId; 
+    } catch (error) {
+        console.log(error);
+        return send(400, { error: "Invalid token" });
+    }
+
+
     if (typeof employeeId !== "string") return res.status(400).json({ error: '"employeeId" must be a string' });
 
     const now = new Date();
-    const date = now.toISOString().replace('T', ' ').slice(0, -5);
-
-    const timeClockId = `TIMECLOCK#${date}`;
+    const date = now.toISOString().split('T')[0]; 
+    const time = now.toISOString().split('T')[1].slice(0, -5); 
+    
+    const timeClockId = `TIMECLOCK#${uuidv4()}`;
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
         Item: {
@@ -31,7 +44,7 @@ module.exports.createTimeClock = async (event, context, cb) => {
             PK: `EMPLOYEE#${employeeId}`,
             SK: timeClockId,
             date: date,
-            name: name,
+            time: time,
         },
     };
 

@@ -44,8 +44,8 @@ functions:
       - http:
           path: timeclock
           method: post
-          # authorizer: #desprotegendo endpoints temporariamente
-          #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
+          authorizer: #desprotegendo endpoints temporariamente
+            arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
   createEmployee:
     handler: src/functions/createEmployee/handler.createEmployee
     environment:
@@ -60,10 +60,10 @@ functions:
       EMPLOYEES_TABLE: ${self:custom.employeesTableName}
     events:
       - http:
-          path: timeclock/{employeeId}/{date}
+          path: timeclockByDate/{date}
           method: get
-          # authorizer: #desprotegendo endpoints temporariamente
-          #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
+          authorizer: #desprotegendo endpoints temporariamente
+            arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
   getTimeClocksPerEmployeeInAMonth:
     handler: src/functions/getTimeClocksPerEmployeeInAMonth/handler.getTimeClocksPerEmployeeInAMonth
     environment:

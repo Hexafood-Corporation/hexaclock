@@ -4,7 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 module.exports.preTokenGeneration = async (event) => {
     const username = event.userName;
 
-    // Ajuste os parâmetros para usar o GSI
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
         IndexName: 'UsernameIndex',
@@ -20,7 +19,7 @@ module.exports.preTokenGeneration = async (event) => {
         let employeeId = null;
 
         if (result.Items.length > 0) {
-            employeeId = result.Items[0].PK; // Assumindo que 'id' seja o PK do usuário.
+            employeeId = result.Items[0].PK; 
             console.log(`Employee ID: ${employeeId}`);
 
             
@@ -50,7 +49,6 @@ module.exports.preTokenGeneration = async (event) => {
         }
 
         if (employeeId != null) {
-            // Adiciona o PK do usuário como uma claim customizada no token
             event.response = {
                 claimsOverrideDetails: {
                     claimsToAddOrOverride: {
