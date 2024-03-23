@@ -3,10 +3,10 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '637423636452'
+  accountId: '905418037797'
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
-  cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
+  cognitoDomain: 'hexaclock'
   apiUrl: 'https://f3lpqbpke9.execute-api.us-east-1.amazonaws.com'
   SqsReportName: 'reports-monthly-${sls:stage}'
 
@@ -83,13 +83,18 @@ functions:
     handler: src/functions/notification/sendEmail/handler.sendEmail
     events:
       - sns: sendEmail
-
   createMonthlyTimeReportRequest:
     handler: src/functions/createMonthlyTimeReportRequest/handler.createMonthlyTimeReportRequest
     events:
       - http:
           path: reports
           method: post
+  preTokenGeneration:
+    handler: src/functions/preTokenGeneration/handler.preTokenGeneration
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.userPoolId}
+          trigger: PreTokenGeneration
 
 resources:
   Resources:
@@ -152,6 +157,9 @@ resources:
         Policies:
           PasswordPolicy:
             MinimumLength: 6
+        LambdaConfig:
+          PreTokenGeneration:
+            !GetAtt PreTokenGenerationLambdaFunction.Arn
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
@@ -179,3 +187,10 @@ resources:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: ${self:custom.SqsReportName}
+
+    HexaClockUserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties:
+        Domain: ${self:custom.cognitoDomain}
+        UserPoolId:
+          Ref: UserPool
