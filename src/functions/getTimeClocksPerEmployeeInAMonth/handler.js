@@ -10,22 +10,27 @@ const send = (statusCode, body) => ({
 });
 
 
-module.exports.getTimeClockPerEmployeeByDate = async (event, context, cb) => {
-    const { employeeId, date } = event.pathParameters;
- 
+module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => {
+    const { employeeId, month } = event.pathParameters;
+
     if (typeof employeeId !== "string") {
         return cb(null, send(400, { error: '"employeeId" must be a string' }));
-    } else if (typeof date !== "string") {
-        return cb(null, send(400, { error: '"day" must be a string' }));
+    } else if (typeof month !== "string") {
+        return cb(null, send(400, { error: '"month" must be a string' }));
     }
 
+    const monthFormated = month.toString().padStart(2, '0')
+
+    console.log(`EMPLOYEE#${employeeId}`)
+    console.log(`TIMECLOCK#2024-${monthFormated}`)
+
     const params = {
-        TableName: process.env.EMPLOYEES_TABLE,
-        KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
-        ExpressionAttributeValues: {
-            ':pk': `EMPLOYEE#${employeeId}`,
-            ':sk': `TIMECLOCK#${date}`
-        }
+      TableName: process.env.EMPLOYEES_TABLE,
+      KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
+      ExpressionAttributeValues: {
+          ':pk': `EMPLOYEE#${employeeId}`,
+          ':sk': `TIMECLOCK#2024-${monthFormated}`
+      }
     };
         
     try {
@@ -39,4 +44,4 @@ module.exports.getTimeClockPerEmployeeByDate = async (event, context, cb) => {
         console.log(error);
         cb(null, send(500, { error: "Could not get timeClock" }));
     }
-};
+}

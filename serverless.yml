@@ -4,7 +4,7 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '637423636452'
+  accountId: '590184086377'
   region: 'us-east-1'
   userPoolId: 'us-east-1_Mx2ZuR78g'
   cognitoDomain: 'https://hexaclock.auth.us-east-1.amazoncognito.com'
@@ -61,6 +61,16 @@ functions:
           path: timeclock/{employeeId}/{date}
           method: get
           # authorizer: #desprotegendo endpoints temporariamente
+          #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
+  getTimeClocksPerEmployeeInAMonth:
+    handler: src/functions/getTimeClocksPerEmployeeInAMonth/handler.getTimeClocksPerEmployeeInAMonth
+    environment:
+      EMPLOYEES_TABLE: ${self:custom.employeesTableName}
+    events:
+      - http:
+          path: timeclockForRelatory/{employeeId}/{month}
+          method: get
+          # authorizer
           #   arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
 resources:
   Resources:
