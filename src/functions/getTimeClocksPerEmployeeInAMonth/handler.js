@@ -4,7 +4,7 @@ const { EmailNotificationMessage } = require('../../domain/emailNotificationMess
 // const { snsClient } = require('../../infra/snsCliente');
 // TODO
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
-const snsClient = new SNSClient({ region: process.env.REGION }); // Substitua "REGION" pela região do seu tópico SNS
+const snsClient = new SNSClient({ region: process.env.REGION });
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -17,13 +17,10 @@ const send = (statusCode, body) => ({
 
 module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => {
 
-
-
     const body = JSON.parse(event.Records[0].body); // Assumindo que event.Records[0].body é uma string JSON
     const { employeeId, email, date } = body;
 
     const { startDate, endDate } = getPreviousMonthRange(body.date);
-
 
     const params = {
         TableName: process.env.EMPLOYEES_TABLE,
@@ -50,9 +47,6 @@ module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => 
 
         const message = new EmailNotificationMessage(email, "Relatório Mensal", "TESTE", html);
  
-        const test = JSON.stringify(message, null, 2);
-        const tests = JSON.stringify(message);
-
         const snsParams = {
         Message: JSON.stringify(message),
         TopicArn: process.env.TOPIC_ARN,
@@ -60,7 +54,6 @@ module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => 
 
     const publishCommand = new PublishCommand(snsParams);
 
-    // Enviar a mensagem usando o cliente SNS
     const data = await snsClient.send(publishCommand);
 
         cb(null, send(200, { items: Items }));
@@ -85,21 +78,41 @@ module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => 
     }
 
     function generateHtmlTable(items) {
+        // Agrupar horários por data
+        const groupedByDate = {};
+        items.forEach(item => {
+            if (!groupedByDate[item.date]) {
+                groupedByDate[item.date] = [];
+            }
+            groupedByDate[item.date].push(item.time);
+        });
+    
+        for (const date in groupedByDate) {
+            groupedByDate[date].sort();
+        }
+    
         let html = `
             <h2>Relatório de Horas</h2>
             <table border="1">
                 <tr>
-                    <th>Data</th>
-                    <th>Hora</th>
+                    <th>DATA</th>
+                    <th>ENTRADA 1</th>
+                    <th>SAÍDA 1</th>
+                    <th>ENTRADA 2</th>
+                    <th>SAÍDA 2</th>
                 </tr>`;
     
-        items.forEach(item => {
+        for (const date in groupedByDate) {
+            const times = groupedByDate[date];
             html += `
                 <tr>
-                    <td>${item.date}</td>
-                    <td>${item.time}</td>
+                    <td>${date}</td>
+                    <td>${times[0] || ''}</td>
+                    <td>${times[1] || ''}</td>
+                    <td>${times[2] || ''}</td>
+                    <td>${times[3] || ''}</td>
                 </tr>`;
-        });
+        }
     
         html += `</table>`;
         return html;
