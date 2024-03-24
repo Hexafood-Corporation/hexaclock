@@ -1,139 +1,134 @@
-<!--
-title: 'Serverless Framework Node Express API service backed by DynamoDB on AWS'
-description: 'This template demonstrates how to develop and deploy a simple Node Express API service backed by DynamoDB running on AWS Lambda using the traditional Serverless Framework.'
-layout: Doc
-framework: v3
-platform: AWS
-language: nodeJS
-priority: 1
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+<h1 align="center">
+    Hexaclock - Hackaton FIAP - SOAT1
+</h1>
 
-# Serverless Framework Node Express API on AWS
+## Índice
 
-This template demonstrates how to develop and deploy a simple Node Express API service, backed by DynamoDB database, running on AWS Lambda using the traditional Serverless Framework.
+- <a href="#boat-sobre-o-projeto">:boat: Sobre o projeto</a>
+- <a href="#hammer-tecnologias">:hammer: Tecnologias</a>
+- <a href="#world_map-desenho-da-solução-mvp">:world_map: Desenho da Solução MVP</a>
+  - <a href="#white_check_mark-diagrama-c4-da-arquitetura">:white_check_mark: Diagrama C4 da Arquitetura</a>
+  - <a href="#airplane-diagrama-de-arquitetura-na-aws">:airplane: Diagrama de Arquitetura na AWS</a>
+  - <a href="#roller_coaster-modelagem-de-dados-nosql-com-dynamodb">:roller_coaster: Modelagem de Dados NoSQL com DynamoDB</a>
+- <a href="#chart_with_upwards_trend-desenho-da-solução-evolutiva">:chart_with_upwards_trend: Desenho da Solução Evolutiva</a>
+- <a href="#cd-esteira-cicd">:cd: Esteira CI/CD</a>
+- <a href="#bookmark_tabs-licença">:bookmark_tabs: Licença</a>
+- <a href="#wink-autores">:wink: Autores</a>
+
+## :boat: Sobre o projeto
+
+Este projeto faz parte do trabalho "Desafio Hackaton - Software Architecture", aplicado como requisito final do curso de Pós Graduação Software Architecture da FIAP em parceria com a Alura.
+
+Foi proposto um desafio no qual deveria-se arquitetar e implementar uma infraestrutura backend em cloud, para atender um sistema de marcação de pontos eletrônicos. No decorrer deste documento, estão listadas como foram atendidos cada requisito do trababalho, bem como a fundamentação das decisões técnicas tomadas no escopo deste projeto.
+
+## :hammer: Tecnologias:
+- **[Node.js](https://nodejs.org/)**
+- **[Serverless Framework](https://www.serverless.com/)**
+- **[Amazon DynamoDB](hhttps://aws.amazon.com/pt/pm/dynamodb/)**
+- **[AWS Lambda](https://aws.amazon.com/pt/pm/lambda/)**
+- **[AWS Cognito](https://aws.amazon.com/pt/pm/cognito/)**
+- **[AWS API Gateway](https://aws.amazon.com/pt/api-gateway/)**
+- **[AWS SQS](https://aws.amazon.com/pt/sqs/)**
+- **[AWS SNS](https://aws.amazon.com/pt/sns/)**
+- **[Mailgun](https://www.mailgun.com/)**
+
+## :world_map: Desenho da Solução MVP
+
+O objetivo do desafio é projetar um sistema de ponto eletrônico cloud native, que suporte grande cargas requisições em horários pico, tendo um tempo de resposta máximo de 5 segundos. O sistema também deve ficar disponível 24 horas e 7 dias por semana. 
+
+O sistema foi dividido em duas partes, sendo a primeira parte um MVP com as seguintes funcionalidades:
+
+* O sistema deve permitir que os usuários se autentiquem;
+* O sistema deve permitir que usuários autenticados registrem seus pontos eletrônicos de entrada e saída;
+* O sistema deve permitir que os usuários autenticados visualizem seus pontos marcados em um dia;
+* O sistema deve permitir que usuários autenticados gerem um relatório com o espelho mensal dos seus pontos, calculando as horas trabalhadas;
+* O sistema não deve permitir que usuários visualizem informações de outros usuários;
+
+Tendo em vista o conhecimento obtido no curso em utilizar recursos da AWS, optou-se por desenvolver um sistema em Arquitetura Serverless. Para aumentar ainda mais a produtividade do time, optou-se por utilizar o Serverless Framework que facilita a alocação de recursos da AWS integrando facilmente a aplicação desenvolvida com o IaC (Infrastructure as code) da mesma. 
+
+Além disso, a arquitetura serverless traz vantagens para solução de negócio, pois temos sistema vai precisar ser usado principalmentem em horários de pico, dessa forma delegamos a responsabilidade de escalabilidade para cloud provider, uma vez que não precisamos se preocupar em manter servidores ativos. 
+
+A complexidade com escabilidade e configuração de servidores são abstraídas por cloud providers, possibilitando que o time de desenvolvimento foquem nas regras de negócios.
+
+### :white_check_mark: Diagrama C4 da Arquitetura
+Na imagem a seguir, consta o Diagrama C4 de Arquitetura do Sistema Hexaclock:
+
+<br>
+<h4 align="center">
+    <img alt="Diagrama C4 de Arquitetura do Sistema Hexaclock:" title="diagrama-c4" src=".github/readme/arquitetura-c4-mvp.drawio.png" width="1864px" />
+</h4>
+<br>
+
+### :airplane: Diagrama de Arquitetura na AWS
+
+Para provisionamento da infraestrutura do MVP, formulamos a seguinte arquitetura na AWS:
+
+<br>
+<h4 align="center">
+    <img alt="Diagrama AWS do MVP" title="diagrama-c4" src=".github/readme/arquitetura-aws-mvp.drawio.png" width="1864px" />
+</h4>
+<br>
+
+Cada endpoint da aplicação é provisionado em uma função lambda separada. Essa abordagem chama-se "Single Responsability Lambda functions", que proporciona as seguintes vantagens:
+
+* Granularidade da visão das solicitações ao sistema;
+* Separacão forte responsabilidade de fluxos;
+* Execução rápida de cada função, tendo em vista da lambda poder ser carregada apenas com o que é necessário para execução da mesma
+
+É válido destacar que essa abordagem tem algunas desvantagens como a repetição de código, tendo em vista que objetivo é criar fluxos independentes. 
+
+### :roller_coaster: Modelagem de Dados NoSQL com DynamoDB
+
+A modelagem de dados de um banco NoSQL DynamoDB deve ser guiada por perguntas que nossa solução deve responder. Dessa forma, formulamos os GSI(Global Secondary Indexes) antes do banco ir para ser produção, conseguindo consultas mais rápidas e de menor custo.
+
+No Hexaclock, foi provisionado uma table no DynamoDB chamada EmployeeTable. Nela ficam registrados tanto informações dos empregados (employee) como das marcações de ponto (timeclock) realizadas pelos mesmos. A modelagem da tabela NoSQL foi realizada no sentido de atender as seguintes solicitações previstas em requisitos de domínio:
+
+* Obter usuário por username;
+* Obter usuário por matrícula (registry);
+* Obter marcações de ponto do funcionário no dia;
+* Obter marcações de ponto do funcionário no mês
+
+<br>
+<h4 align="center">
+    <img alt="Modelagem da table DynamoDB" title="modelagemdb" src=".github/readme/modelagem-dynamodb.png" width="1864px" />
+</h4>
+<br>
+
+## :chart_with_upwards_trend: Desenho da Solução Evolutiva
+
+A fim de atender a evolução prevista no sistema, foi formulado uma nova arquitetura serverless, acrescentando novos recursos como 
+* A divisão de papeis no serviço Cognito;
+* Acriação de uma nova table para armazenar solicitações de registro de ponto;
+* Provisionamento do recurso Event Bridge para ativação de rotinas periódicas como notificações de lembres para marcar ponto aos funcionários
+
+<br>
+<h4 align="center">
+    <img alt="Diagrama AWS do MVP" title="diagrama-c4" src=".github/readme/arquitetura-aws-evolucao.drawio.png" width="1864px" />
+</h4>
+<br>
 
 
-## Anatomy of the template
+## :cd: Esteira CI/CD
 
-This template configures a single function, `api`, which is responsible for handling all incoming requests thanks to the `httpApi` event. To learn more about `httpApi` event configuration options, please refer to [httpApi event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api/). As the event is configured in a way to accept all incoming requests, `express` framework is responsible for routing and handling requests internally. Implementation takes advantage of `serverless-http` package, which allows you to wrap existing `express` applications. To learn more about `serverless-http`, please refer to corresponding [GitHub repository](https://github.com/dougmoscrop/serverless-http). Additionally, it also handles provisioning of a DynamoDB database that is used for storing data about users. The `express` application exposes two endpoints, `POST /users` and `GET /user/{userId}`, which allow to create and retrieve users.
+O Serverless Framework facilita o deploy do código e da infraestrutura, através do uso de Cloud Formation no arquivo serverless.yml. Então isso possibiliou a criação de uma esteira única que faz o deploy tanto do código como de novos recursos declarados no IaC:
 
-## Usage
+<br>
+<h4 align="center">
+    <img alt="Esteira CI/CD da aplicação e IaC" title="cicd" src=".github/readme/cicd.png" width="1864px" />
+</h4>
+<br>
 
-### Deployment
 
-Install dependencies with:
+## :bookmark_tabs: Licença
 
-```
-npm install
-```
+Este projeto esta sobe a licença MIT. Veja a [LICENÇA](https://opensource.org/licenses/MIT) para saber mais.
 
-and then deploy with:
+## :wink: Autores
 
-```
-serverless deploy
-```
+Feito com ❤️ por:
 
-After running deploy, you should see output similar to:
+- [Bruno Padilha](https://www.linkedin.com/in/brpadilha/)
+- [Lucas Siqueira](https://www.linkedin.com/in/lucassouzatidev/)
+- [Marayza Gonzaga](https://www.linkedin.com/in/marayza-gonzaga-7766251b1/)
 
-```bash
-Deploying aws-node-express-dynamodb-api-project to stage dev (us-east-1)
-
-✔ Service deployed to stack aws-node-express-dynamodb-api-project-dev (196s)
-
-endpoint: ANY - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
-functions:
-  api: aws-node-express-dynamodb-api-project-dev-api (766 kB)
-```
-
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [`httpApi` event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api/). Additionally, in current configuration, the DynamoDB table will be removed when running `serverless remove`. To retain the DynamoDB table even after removal of the stack, add `DeletionPolicy: Retain` to its resource definition.
-
-### Invocation
-
-After successful deployment, you can create a new user by calling the corresponding endpoint:
-
-```bash
-curl --request POST 'https://xxxxxx.execute-api.us-east-1.amazonaws.com/users' --header 'Content-Type: application/json' --data-raw '{"name": "John", "userId": "someUserId"}'
-```
-
-Which should result in the following response:
-
-```bash
-{"userId":"someUserId","name":"John"}
-```
-
-You can later retrieve the user by `userId` by calling the following endpoint:
-
-```bash
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/users/someUserId
-```
-
-Which should result in the following response:
-
-```bash
-{"userId":"someUserId","name":"John"}
-```
-
-If you try to retrieve user that does not exist, you should receive the following response:
-
-```bash
-{"error":"Could not find user with provided \"userId\""}
-```
-
-### Local development
-
-It is also possible to emulate DynamoDB, API Gateway and Lambda locally using the `serverless-dynamodb-local` and `serverless-offline` plugins. In order to do that, run:
-
-```bash
-serverless plugin install -n serverless-dynamodb-local
-serverless plugin install -n serverless-offline
-```
-
-It will add both plugins to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`. Make sure that `serverless-offline` is listed as last plugin in `plugins` section:
-
-```
-plugins:
-  - serverless-dynamodb-local
-  - serverless-offline
-```
-
-You should also add the following config to `custom` section in `serverless.yml`:
-
-```
-custom:
-  (...)
-  dynamodb:
-    start:
-      migrate: true
-    stages:
-      - dev
-```
-
-Additionally, we need to reconfigure `AWS.DynamoDB.DocumentClient` to connect to our local instance of DynamoDB. We can take advantage of `IS_OFFLINE` environment variable set by `serverless-offline` plugin and replace:
-
-```javascript
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-```
-
-with the following:
-
-```javascript
-const dynamoDbClientParams = {};
-if (process.env.IS_OFFLINE) {
-  dynamoDbClientParams.region = 'localhost'
-  dynamoDbClientParams.endpoint = 'http://localhost:8000'
-}
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient(dynamoDbClientParams);
-```
-
-After that, running the following command with start both local API Gateway emulator as well as local instance of emulated DynamoDB:
-
-```bash
-serverless offline start
-```
-
-To learn more about the capabilities of `serverless-offline` and `serverless-dynamodb-local`, please refer to their corresponding GitHub repositories:
-- https://github.com/dherault/serverless-offline
-- https://github.com/99x/serverless-dynamodb-local
+[Voltar ao topo](#índice)
