@@ -16,7 +16,7 @@ module.exports.sendEmail = async (event) => {
     const messageData = JSON.parse(snsMessage);
 
     // Agora você pode acessar destinatário, assunto, conteúdo e o conteúdo HTML da mensagem
-    const { destinatario, assunto, conteudo } = messageData;
+    const { destinatario, assunto, conteudo, html } = messageData;
 
     // Aqui você adicionaria o código para enviar o e-mail usando o destinatário, assunto e conteúdo capturados
     console.log(`Enviando e-mail para: ${destinatario}, Assunto: ${assunto}, Conteúdo: ${conteudo}`);
@@ -27,7 +27,7 @@ module.exports.sendEmail = async (event) => {
             to: [destinatario],
             subject: assunto,
             text: conteudo,
-            html: `<h1>${conteudo}</h1>`
+            html: html
         });
         console.log(msg);
     } catch (err) {

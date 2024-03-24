@@ -3,12 +3,14 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '905418037797'
+  accountId: '637423636452'
   region: 'us-east-1'
-  userPoolId: 'us-east-1_7dvIVdpu3'
-  cognitoDomain: 'hexaclock'
-  apiUrl: 'https://hexaclock.auth.us-east-1.amazoncognito.com/'
+  userPoolId: 'us-east-1_v5iFfvdLE'
+  cognitoDomain: 'hexaclock2'
+  apiUrl: 'https://hexaclock2.auth.us-east-1.amazoncognito.com/'
   SqsReportName: 'reports-monthly-${sls:stage}'
+  SqsReportUrl: 'https://sqs.us-east-1.amazonaws.com/637423636452/reports-monthly-${sls:stage}'
+  TopicArn: 'arn:aws:sns:us-east-1:637423636452:sendEmail'
 
 provider:
   name: aws
@@ -28,8 +30,13 @@ provider:
       #       - Fn::GetAtt: [ EmployeesTable, Arn ]
   environment:
     EMPLOYEES_TABLE: ${self:custom.employeesTableName}
-    MAILGUN_API_KEY: 
-    MAILGUN_DOMAIN: sandbox367af257f688428891d21b81c2de4c92.mailgun.org
+    MAILGUN_API_KEY: XXXXX-309b0ef4-ca81cdc2
+    MAILGUN_DOMAIN: sandbox4c9bcd5846d846e089ff8d95aec90cc7.mailgun.org
+    REGION: ${self:custom.region}
+    ACCOUNT_ID: ${self:custom.accountId}
+    SQS_REPORT_URL: ${self:custom.SqsReportUrl}
+    TOPIC_ARN: ${self:custom.TopicArn}
+
 
 functions:
   # api:
@@ -87,8 +94,10 @@ functions:
     handler: src/functions/createMonthlyTimeReportRequest/handler.createMonthlyTimeReportRequest
     events:
       - http:
-          path: reports
+          path: reports/{date}
           method: post
+          authorizer:
+            arn: arn:aws:cognito-idp:${self:custom.region}:${self:custom.accountId}:userpool/${self:custom.userPoolId}
   preTokenGeneration:
     handler: src/functions/auth/preTokenGeneration/handler.preTokenGeneration
     role: arn:aws:iam::${self:custom.accountId}:role/LabRole

@@ -1,5 +1,10 @@
 
 const { dynamoDbClient, QueryCommand } = require('../../infra/dynamoDbClient'); 
+const { EmailNotificationMessage } = require('../../domain/emailNotificationMessage');
+// const { snsClient } = require('../../infra/snsCliente');
+// TODO
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+const snsClient = new SNSClient({ region: process.env.REGION }); // Substitua "REGION" pela região do seu tópico SNS
 
 const send = (statusCode, body) => ({
     statusCode: statusCode,
@@ -11,42 +16,92 @@ const send = (statusCode, body) => ({
 
 
 module.exports.getTimeClocksPerEmployeeInAMonth = async (event, context, cb) => {
-    const { employeeId, month } = event.pathParameters;
 
-    if (typeof employeeId !== "string") {
-        return cb(null, send(400, { error: '"employeeId" must be a string' }));
-    } else if (typeof month !== "string") {
-        return cb(null, send(400, { error: '"month" must be a string' }));
-    }
 
-    const monthFormated = month.toString().padStart(2, '0')
 
-    console.log(`EMPLOYEE#${employeeId}`)
-    console.log(`TIMECLOCK#2024-${monthFormated}`)
+    const body = JSON.parse(event.Records[0].body); // Assumindo que event.Records[0].body é uma string JSON
+    const { employeeId, email, date } = body;
+
+    const { startDate, endDate } = getPreviousMonthRange(body.date);
+
 
     const params = {
-      TableName: process.env.EMPLOYEES_TABLE,
-      KeyConditionExpression: 'PK = :pk and begins_with(SK, :sk)',
-      ExpressionAttributeValues: {
-          ':pk': `EMPLOYEE#${employeeId}`,
-          ':sk': `TIMECLOCK#2024-${monthFormated}`
-      }
+        TableName: process.env.EMPLOYEES_TABLE,
+        IndexName: 'TimeClockDateIndex',
+        KeyConditionExpression: 'PK = :pk and #dateAttr BETWEEN :startDate AND :endDate',
+        ExpressionAttributeNames: {
+            '#dateAttr': 'date' 
+        },
+        ExpressionAttributeValues: {
+            ':pk': `EMPLOYEE#${employeeId}`,
+            ':startDate': startDate,
+            ':endDate': endDate
+        }
     };
-        
+    
     try {
-
+        
         const { Items } = await dynamoDbClient.send(new QueryCommand(params));
         if (!Items || Items.length === 0) {
             return cb(null, send(404, { error: "TimeClock not found" }));
         }
+    
+        const html = generateHtmlTable(Items);
 
+        const message = new EmailNotificationMessage(email, "Relatório Mensal", "TESTE", html);
+ 
+        const test = JSON.stringify(message, null, 2);
+        const tests = JSON.stringify(message);
 
-        // TODO ENVIAR EMAIL
+        const snsParams = {
+        Message: JSON.stringify(message),
+        TopicArn: process.env.TOPIC_ARN,
+    };
+
+    const publishCommand = new PublishCommand(snsParams);
+
+    // Enviar a mensagem usando o cliente SNS
+    const data = await snsClient.send(publishCommand);
 
         cb(null, send(200, { items: Items }));
 
     } catch (error) {
         console.log(error);
         cb(null, send(500, { error: "Could not get timeClock" }));
+    }
+    
+    function getPreviousMonthRange(date) {
+        const currentDate = new Date(date);
+        currentDate.setDate(1);
+        currentDate.setDate(currentDate.getDate() - 1);
+        const firstDayPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDayPreviousMonth = currentDate;
+        const format = (date) => date.toISOString().split('T')[0];
+    
+        return {
+            startDate: format(firstDayPreviousMonth),
+            endDate: format(lastDayPreviousMonth)
+        };
+    }
+
+    function generateHtmlTable(items) {
+        let html = `
+            <h2>Relatório de Horas</h2>
+            <table border="1">
+                <tr>
+                    <th>Data</th>
+                    <th>Hora</th>
+                </tr>`;
+    
+        items.forEach(item => {
+            html += `
+                <tr>
+                    <td>${item.date}</td>
+                    <td>${item.time}</td>
+                </tr>`;
+        });
+    
+        html += `</table>`;
+        return html;
     }
 }

@@ -1,8 +1,17 @@
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const sqsClient = new SQSClient({ region: "us-east-1" }); 
+const jwt = require('jsonwebtoken'); 
 
-// TODO 
-const queueUrl = 'https://sqs.us-east-1.amazonaws.com/637423636452/reports-monthly-dev'; 
+const queueUrl = process.env.SQS_REPORT_URL; 
+
+const send = (statusCode, body) => ({
+    statusCode: statusCode,
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+});
+
 
 async function sendToSQS(queueUrl, mensagem) {
     const params = {
@@ -21,23 +30,28 @@ async function sendToSQS(queueUrl, mensagem) {
   }
 
 module.exports.createMonthlyTimeReportRequest = async (event, context, cb) => {
-   
-    const { employeeId, month } = JSON.parse(event.body);
-
-    if (typeof employeeId !== "string") {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: '"employeeId" must be a string' })
-        };
-    } else if (typeof month !== "string") {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: '"date" must be a string' })
-        };
+    
+    const token = event.headers.Authorization || event.headers.authorization; 
+    if (!token) {
+        return send(401, { error: "No token provided" });
     }
 
-    const monthFormated = month.toString().padStart(2, '0');
-    const messageBody = { employeeId, monthFormated }; 
+    let employeeId;
+    let email;    
+    try {
+        const decodedToken = jwt.decode(token.split(" ")[1]); // Decodifica o token (considerando que está no formato 'Bearer token')
+
+        employeeId = decodedToken.employeeId; 
+        email = decodedToken.email;
+        console.log("employeeId:", employeeId);
+    } catch (error) {
+        console.log(error);
+        return send(400, { error: "Invalid token" });
+    }
+
+    const { date } = event.pathParameters;
+
+    const messageBody = { employeeId, email, date }; 
 
     try {
         const data = await sendToSQS(queueUrl, messageBody);
