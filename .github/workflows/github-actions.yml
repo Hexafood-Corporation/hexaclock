@@ -48,5 +48,5 @@ jobs:
       run:  |
         export MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}
         export MAILGUN_DOMAIN=${{ secrets.MAILGUN_DOMAIN }} 
-        export ACCOUNT_ID=${{ secrets.MAILGUN_DOMAIN }} 
+        export ACCOUNT_ID=${{ vars.ACCOUNT_ID }} 
         serverless deploy --conceal
