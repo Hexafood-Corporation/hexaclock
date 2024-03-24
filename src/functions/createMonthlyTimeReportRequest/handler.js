@@ -51,7 +51,9 @@ module.exports.createMonthlyTimeReportRequest = async (event, context, cb) => {
 
     const { date } = event.pathParameters;
 
-    const messageBody = { employeeId, email, date }; 
+    const [year, month] = date.split('-').map(Number); // Divide a string por "-" e converte para números
+
+    const messageBody = { employeeId, email, year, month }; 
 
     try {
         const data = await sendToSQS(queueUrl, messageBody);

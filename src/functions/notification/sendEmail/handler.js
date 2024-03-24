@@ -7,8 +7,6 @@ const mailgun = new Mailgun(formData);
 const mg = mailgun.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 
 module.exports.sendEmail = async (event) => {
-    console.log(process.env.MAILGUN_API_KEY);
-
     // O evento SNS contém um array 'Records'. Cada registro representa uma mensagem SNS.
     const snsMessage = event.Records[0].Sns.Message;
 

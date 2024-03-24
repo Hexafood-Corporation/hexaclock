@@ -5,7 +5,7 @@ custom:
   employeesTableName: 'employees-table-${sls:stage}'
   accountId: '637423636452'
   region: 'us-east-1'
-  userPoolId: 'us-east-1_XDo5c1gSU'
+  userPoolId: 'us-east-1_iTTD9UkJd'
   cognitoDomain: 'hexaclock2'
   apiUrl: 'https://hexaclock2.auth.us-east-1.amazoncognito.com/'
   SqsReportName: 'reports-monthly-${sls:stage}'
