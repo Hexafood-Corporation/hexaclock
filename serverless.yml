@@ -39,10 +39,6 @@ provider:
 
 
 functions:
-  # api:
-  #   handler: src/index.handler
-  #   events:
-  #     - httpApi: '*'
   createTimeClock:
     handler: src/functions/createTimeClock/handler.createTimeClock
     environment:
