@@ -3,14 +3,14 @@ frameworkVersion: '3'
 
 custom:
   employeesTableName: 'employees-table-${sls:stage}'
-  accountId: '905418037797'
+  accountId: ${env:ACCOUNT_ID}
   region: 'us-east-1'
-  userPoolId: 'us-east-1_iTTD9UkJd'
+  userPoolId: 'us-east-1_UqTUTb1iu'
   cognitoDomain: 'hexaclock'
   apiUrl: 'https://hexaclock.auth.us-east-1.amazoncognito.com/'
   SqsReportName: 'reports-monthly-${sls:stage}'
-  SqsReportUrl: 'https://sqs.us-east-1.amazonaws.com/637423636452/reports-monthly-${sls:stage}'
-  TopicArn: 'arn:aws:sns:us-east-1:637423636452:sendEmail'
+  SqsReportUrl: 'https://sqs.us-east-1.amazonaws.com/${env:ACCOUNT_ID}/reports-monthly-${sls:stage}'
+  TopicArn: 'arn:aws:sns:us-east-1:${env:ACCOUNT_ID}:sendEmail'
 
 provider:
   name: aws
@@ -30,8 +30,8 @@ provider:
       #       - Fn::GetAtt: [ EmployeesTable, Arn ]
   environment:
     EMPLOYEES_TABLE: ${self:custom.employeesTableName}
-    MAILGUN_API_KEY: XXXXX-309b0ef4-ca81cdc2
-    MAILGUN_DOMAIN: sandbox4c9bcd5846d846e089ff8d95aec90cc7.mailgun.org
+    MAILGUN_API_KEY: ${env:MAILGUN_API_KEY}
+    MAILGUN_DOMAIN: ${env:MAILGUN_DOMAIN}
     REGION: ${self:custom.region}
     ACCOUNT_ID: ${self:custom.accountId}
     SQS_REPORT_URL: ${self:custom.SqsReportUrl}
