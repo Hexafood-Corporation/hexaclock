@@ -24,7 +24,7 @@ Foi proposto um desafio no qual deveria-se arquitetar e implementar uma infraest
 ## :hammer: Tecnologias:
 - **[Node.js](https://nodejs.org/)**
 - **[Serverless Framework](https://www.serverless.com/)**
-- **[Amazon DynamoDB](hhttps://aws.amazon.com/pt/pm/dynamodb/)**
+- **[Amazon DynamoDB](https://aws.amazon.com/pt/pm/dynamodb/)**
 - **[AWS Lambda](https://aws.amazon.com/pt/pm/lambda/)**
 - **[AWS Cognito](https://aws.amazon.com/pt/pm/cognito/)**
 - **[AWS API Gateway](https://aws.amazon.com/pt/api-gateway/)**
