@@ -17,6 +17,9 @@
 
 ## :boat: Sobre o projeto
 
+Link da apresentação: [Apresentação](https://drive.google.com/file/d/1zqeCP-MjVsTuVX5Sm7OSOHjHP2s-
+tor2/view?usp=sharing)
+
 Este projeto faz parte do trabalho "Desafio Hackaton - Software Architecture", aplicado como requisito final do curso de Pós Graduação Software Architecture da FIAP em parceria com a Alura.
 
 Foi proposto um desafio no qual deveria-se arquitetar e implementar uma infraestrutura backend em cloud, para atender um sistema de marcação de pontos eletrônicos. No decorrer deste documento, estão listadas como foram atendidos cada requisito do trababalho, bem como a fundamentação das decisões técnicas tomadas no escopo deste projeto.
